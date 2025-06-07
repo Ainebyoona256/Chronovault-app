@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
+import { analyticsConfig } from './config'
 
 // GET /api/admin/analytics - Get analytics data
 export async function GET() {
@@ -13,7 +14,7 @@ export async function GET() {
     }
 
     const user = session.user as (typeof session.user & { role?: string });
-    if (!user || !['ADMIN', 'SUPER_ADMIN'].includes(user.role || '')) {
+    if (!user || !analyticsConfig.allowedRoles.includes(user.role || '')) {
       return new NextResponse('Unauthorized', { status: 401 })
     }
 
@@ -32,7 +33,7 @@ export async function GET() {
         prisma.user.count(),
         prisma.content.count(),
         prisma.user.findMany({
-          take: 5,
+          take: analyticsConfig.recentUsersLimit,
           orderBy: { createdAt: 'desc' },
           select: {
             id: true,
@@ -43,7 +44,7 @@ export async function GET() {
           }
         }),
         prisma.content.findMany({
-          take: 5,
+          take: analyticsConfig.recentContentLimit,
           orderBy: { createdAt: 'desc' },
           select: {
             id: true,
@@ -69,7 +70,7 @@ export async function GET() {
           _count: true
         }),
         prisma.analytics.findMany({
-          take: 10,
+          take: analyticsConfig.recentEventsLimit,
           orderBy: { timestamp: 'desc' }
         })
       ])
