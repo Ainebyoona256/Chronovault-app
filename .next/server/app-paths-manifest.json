@@ -1,0 +1,11 @@
+{
+  "/api/admin/analytics/route": "app/api/admin/analytics/route.js",
+  "/api/admin/users/[id]/route": "app/api/admin/users/[id]/route.js",
+  "/api/admin/settings/route": "app/api/admin/settings/route.js",
+  "/api/admin/settings/[key]/route": "app/api/admin/settings/[key]/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/admin/users/route": "app/api/admin/users/route.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/auth/signin/page": "app/auth/signin/page.js",
+  "/page": "app/page.js"
+}

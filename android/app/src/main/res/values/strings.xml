@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Chronovault</string>
+    <string name="title_activity_main">Chronovault</string>
+    <string name="package_name">com.chronovault.app</string>
+    <string name="custom_url_scheme">com.chronovault.app</string>
+</resources>
