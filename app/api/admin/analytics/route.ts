@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic"
+export const runtime = 'edge'
 
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
@@ -6,111 +7,92 @@ import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
 
 // GET /api/admin/analytics - Get analytics data
-export async function GET(request: Request) {
-  const session = await getServerSession(authOptions)
-  
-  if (!session) {
-    return new NextResponse('Unauthorized', { status: 401 })
-  }
-  const user = session.user as (typeof session.user & { role?: string });
-  if (!user || !['ADMIN', 'SUPER_ADMIN'].includes(user.role || '')) {
-    return new NextResponse('Unauthorized', { status: 401 })
-  }
-
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url)
-    const timeRange = searchParams.get('timeRange') || '7d'
+    const session = await getServerSession(authOptions)
     
-    // Calculate the start date based on the time range
-    const now = new Date()
-    const startDate = new Date(now)
-    switch (timeRange) {
-      case '24h':
-        startDate.setHours(startDate.getHours() - 24)
-        break
-      case '7d':
-        startDate.setDate(startDate.getDate() - 7)
-        break
-      case '30d':
-        startDate.setDate(startDate.getDate() - 30)
-        break
-      case '90d':
-        startDate.setDate(startDate.getDate() - 90)
-        break
-      default:
-        startDate.setDate(startDate.getDate() - 7)
+    if (!session) {
+      return new NextResponse('Unauthorized', { status: 401 })
     }
 
-    // Get total users
-    const totalUsers = await prisma.user.count()
+    const user = session.user as (typeof session.user & { role?: string });
+    if (!user || !['ADMIN', 'SUPER_ADMIN'].includes(user.role || '')) {
+      return new NextResponse('Unauthorized', { status: 401 })
+    }
 
-    // Get total content
-    const totalContent = await prisma.content.count({
-      where: { published: true }
-    })
-
-    // Get active users (users who have content or analytics events in the time range)
-    const activeUsers = await prisma.user.count({
-      where: {
-        OR: [
-          {
-            contents: {
-              some: {
-                updatedAt: {
-                  gte: startDate
-                }
+    // Wrap all database queries in a try-catch block
+    try {
+      const [
+        totalUsers,
+        totalContent,
+        recentUsers,
+        recentContent,
+        userStats,
+        contentStats,
+        categoryStats,
+        recentEvents
+      ] = await Promise.all([
+        prisma.user.count(),
+        prisma.content.count(),
+        prisma.user.findMany({
+          take: 5,
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            createdAt: true,
+            role: true
+          }
+        }),
+        prisma.content.findMany({
+          take: 5,
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            title: true,
+            createdAt: true,
+            author: {
+              select: {
+                name: true
               }
             }
           }
-        ]
-      }
-    })
+        }),
+        prisma.user.groupBy({
+          by: ['role'],
+          _count: true
+        }),
+        prisma.content.groupBy({
+          by: ['published'],
+          _count: true
+        }),
+        prisma.content.groupBy({
+          by: ['category'],
+          _count: true
+        }),
+        prisma.analytics.findMany({
+          take: 10,
+          orderBy: { timestamp: 'desc' }
+        })
+      ])
 
-    // Get popular categories
-    const popularCategories = await prisma.content.groupBy({
-      by: ['category'],
-      _count: {
-        category: true
-      },
-      where: {
-        published: true,
-        updatedAt: {
-          gte: startDate
-        }
-      },
-      orderBy: {
-        _count: {
-          category: 'desc'
-        }
-      },
-      take: 5
-    })
-
-    // Get recent events
-    const recentEvents = await prisma.analytics.findMany({
-      where: {
-        timestamp: {
-          gte: startDate
-        }
-      },
-      orderBy: {
-        timestamp: 'desc'
-      },
-      take: 10
-    })
-
-    return NextResponse.json({
-      totalUsers,
-      totalContent,
-      activeUsers,
-      popularCategories: popularCategories.map(cat => ({
-        category: cat.category,
-        count: cat._count.category
-      })),
-      recentEvents
-    })
+      return NextResponse.json({
+        totalUsers,
+        totalContent,
+        recentUsers,
+        recentContent,
+        userStats,
+        contentStats,
+        categoryStats,
+        recentEvents
+      })
+    } catch (dbError) {
+      console.error('Database query error:', dbError)
+      return new NextResponse('Error fetching analytics data', { status: 500 })
+    }
   } catch (error) {
-    console.error('Error fetching analytics:', error)
+    console.error('Analytics error:', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 }
