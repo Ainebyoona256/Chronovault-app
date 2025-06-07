@@ -79,13 +79,13 @@ export async function DELETE(
   { params }: { params: Promise<{ key: string }> }
 ) {
   const { key } = await params;
-  const session = await getServerSession()
+  const session = await getServerSession(authOptions)
   
   if (!session) {
     return new NextResponse('Unauthorized', { status: 401 })
   }
   const user = session.user as (typeof session.user & { role?: string });
-  if (!user || !['ADMIN', 'SUPER_ADMIN'].includes(user.role || '')) {
+  if (!user || user.role !== 'SUPER_ADMIN') {
     return new NextResponse('Unauthorized', { status: 401 })
   }
 

@@ -90,13 +90,14 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/admin/users/[id] - Delete a user
+// DELETE /api/admin/users/[id] - Delete user
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await getServerSession()
+  const session = await getServerSession(authOptions)
+  
   if (!session) {
     return new NextResponse('Unauthorized', { status: 401 })
   }
