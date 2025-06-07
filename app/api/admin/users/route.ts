@@ -3,10 +3,11 @@ export const dynamic = "force-dynamic"
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
+import { authOptions } from '@/lib/auth'
 
 // GET /api/admin/users - List all users
 export async function GET() {
-  const session = await getServerSession()
+  const session = await getServerSession(authOptions)
   if (!session) {
     return new NextResponse('Unauthorized', { status: 401 })
   }
@@ -23,6 +24,12 @@ export async function GET() {
         email: true,
         role: true,
         createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: {
+            contents: true
+          }
+        }
       },
       orderBy: {
         createdAt: 'desc'
@@ -38,7 +45,7 @@ export async function GET() {
 
 // POST /api/admin/users - Create a new user
 export async function POST(request: Request) {
-  const session = await getServerSession()
+  const session = await getServerSession(authOptions)
   if (!session) {
     return new NextResponse('Unauthorized', { status: 401 })
   }
@@ -48,34 +55,25 @@ export async function POST(request: Request) {
   }
 
   try {
-    const body = await request.json()
-    const { email, name, role, password } = body
+    const { email, name, role } = await request.json()
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
-    })
-
-    if (existingUser) {
-      return new NextResponse('User already exists', { status: 400 })
-    }
-
-    const user = await prisma.user.create({
+    const newUser = await prisma.user.create({
       data: {
         email,
         name,
-        role,
-        password // Note: In production, hash the password before storing
+        role: role || 'USER'
       },
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
-        createdAt: true
+        createdAt: true,
+        updatedAt: true
       }
     })
 
-    return NextResponse.json(user)
+    return NextResponse.json(newUser)
   } catch (error) {
     console.error('Error creating user:', error)
     return new NextResponse('Internal Server Error', { status: 500 })

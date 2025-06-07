@@ -3,10 +3,11 @@ export const dynamic = "force-dynamic"
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
+import { authOptions } from '@/lib/auth'
 
 // GET /api/admin/settings - List all settings
 export async function GET() {
-  const session = await getServerSession()
+  const session = await getServerSession(authOptions)
   if (!session) {
     return new NextResponse('Unauthorized', { status: 401 })
   }
@@ -31,7 +32,7 @@ export async function GET() {
 
 // POST /api/admin/settings - Create a new setting
 export async function POST(request: Request) {
-  const session = await getServerSession()
+  const session = await getServerSession(authOptions)
   if (!session) {
     return new NextResponse('Unauthorized', { status: 401 })
   }
