@@ -3,9 +3,6 @@ import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
 
-export const dynamic = "force-dynamic"
-export const runtime = 'edge'
-
 // GET /api/admin/analytics - Get analytics data
 export async function GET() {
   try {
