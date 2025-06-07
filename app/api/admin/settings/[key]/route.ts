@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic"
+export const runtime = 'edge'
 
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
@@ -8,31 +9,36 @@ import { authOptions } from '@/lib/auth'
 // GET /api/admin/settings/[key] - Get a setting
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ key: string }> }
+  { params }: { params: { key: string } }
 ) {
-  const { key } = await params;
-  const session = await getServerSession(authOptions)
-  
-  if (!session) {
-    return new NextResponse('Unauthorized', { status: 401 })
-  }
-  const user = session.user as (typeof session.user & { role?: string });
-  if (!user || !['ADMIN', 'SUPER_ADMIN'].includes(user.role || '')) {
-    return new NextResponse('Unauthorized', { status: 401 })
-  }
-
   try {
-    const setting = await prisma.settings.findUnique({
-      where: { key }
-    })
-
-    if (!setting) {
-      return new NextResponse('Setting not found', { status: 404 })
+    const session = await getServerSession(authOptions)
+    
+    if (!session) {
+      return new NextResponse('Unauthorized', { status: 401 })
     }
 
-    return NextResponse.json(setting)
+    const user = session.user as (typeof session.user & { role?: string });
+    if (!user || !['ADMIN', 'SUPER_ADMIN'].includes(user.role || '')) {
+      return new NextResponse('Unauthorized', { status: 401 })
+    }
+
+    try {
+      const setting = await prisma.settings.findUnique({
+        where: { key: params.key }
+      })
+
+      if (!setting) {
+        return new NextResponse('Setting not found', { status: 404 })
+      }
+
+      return NextResponse.json(setting)
+    } catch (dbError) {
+      console.error('Database query error:', dbError)
+      return new NextResponse('Error fetching setting', { status: 500 })
+    }
   } catch (error) {
-    console.error('Error fetching setting:', error)
+    console.error('Settings error:', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 }
@@ -40,35 +46,40 @@ export async function GET(
 // PATCH /api/admin/settings/[key] - Update a setting
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ key: string }> }
+  { params }: { params: { key: string } }
 ) {
-  const { key } = await params;
-  const session = await getServerSession(authOptions)
-  
-  if (!session) {
-    return new NextResponse('Unauthorized', { status: 401 })
-  }
-  const user = session.user as (typeof session.user & { role?: string });
-  if (!user || !['ADMIN', 'SUPER_ADMIN'].includes(user.role || '')) {
-    return new NextResponse('Unauthorized', { status: 401 })
-  }
-
   try {
-    const body = await request.json()
-    const { value, description } = body
+    const session = await getServerSession(authOptions)
+    
+    if (!session) {
+      return new NextResponse('Unauthorized', { status: 401 })
+    }
 
-    const setting = await prisma.settings.update({
-      where: { key },
-      data: {
-        value,
-        description,
-        updatedAt: new Date()
-      }
-    })
+    const user = session.user as (typeof session.user & { role?: string });
+    if (!user || !['ADMIN', 'SUPER_ADMIN'].includes(user.role || '')) {
+      return new NextResponse('Unauthorized', { status: 401 })
+    }
 
-    return NextResponse.json(setting)
+    try {
+      const body = await request.json()
+      const { value, description } = body
+
+      const setting = await prisma.settings.update({
+        where: { key: params.key },
+        data: {
+          value,
+          description,
+          updatedAt: new Date()
+        }
+      })
+
+      return NextResponse.json(setting)
+    } catch (dbError) {
+      console.error('Database query error:', dbError)
+      return new NextResponse('Error updating setting', { status: 500 })
+    }
   } catch (error) {
-    console.error('Error updating setting:', error)
+    console.error('Settings error:', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 }
@@ -76,27 +87,32 @@ export async function PATCH(
 // DELETE /api/admin/settings/[key] - Delete a setting
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ key: string }> }
+  { params }: { params: { key: string } }
 ) {
-  const { key } = await params;
-  const session = await getServerSession(authOptions)
-  
-  if (!session) {
-    return new NextResponse('Unauthorized', { status: 401 })
-  }
-  const user = session.user as (typeof session.user & { role?: string });
-  if (!user || user.role !== 'SUPER_ADMIN') {
-    return new NextResponse('Unauthorized', { status: 401 })
-  }
-
   try {
-    await prisma.settings.delete({
-      where: { key }
-    })
+    const session = await getServerSession(authOptions)
+    
+    if (!session) {
+      return new NextResponse('Unauthorized', { status: 401 })
+    }
 
-    return new NextResponse(null, { status: 204 })
+    const user = session.user as (typeof session.user & { role?: string });
+    if (!user || user.role !== 'SUPER_ADMIN') {
+      return new NextResponse('Unauthorized', { status: 401 })
+    }
+
+    try {
+      await prisma.settings.delete({
+        where: { key: params.key }
+      })
+
+      return new NextResponse(null, { status: 204 })
+    } catch (dbError) {
+      console.error('Database query error:', dbError)
+      return new NextResponse('Error deleting setting', { status: 500 })
+    }
   } catch (error) {
-    console.error('Error deleting setting:', error)
+    console.error('Settings error:', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 } 
