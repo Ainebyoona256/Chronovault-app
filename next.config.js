@@ -2,8 +2,7 @@ const webpack = require('webpack');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
-  distDir: 'out',
+  output: 'standalone',
   images: {
     unoptimized: true,
     remotePatterns: [
