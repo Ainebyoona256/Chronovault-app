@@ -1,11 +1,11 @@
 {
-  "/api/admin/analytics/route": "/api/admin/analytics",
-  "/api/admin/users/[id]/route": "/api/admin/users/[id]",
-  "/api/admin/settings/route": "/api/admin/settings",
-  "/api/admin/settings/[key]/route": "/api/admin/settings/[key]",
   "/_not-found/page": "/_not-found",
-  "/api/admin/users/route": "/api/admin/users",
+  "/api/admin/analytics/route": "/api/admin/analytics",
+  "/api/admin/settings/[key]/route": "/api/admin/settings/[key]",
+  "/api/admin/users/[id]/route": "/api/admin/users/[id]",
   "/api/auth/[...nextauth]/route": "/api/auth/[...nextauth]",
-  "/auth/signin/page": "/auth/signin",
-  "/page": "/"
+  "/api/admin/settings/route": "/api/admin/settings",
+  "/api/admin/users/route": "/api/admin/users",
+  "/page": "/",
+  "/auth/signin/page": "/auth/signin"
 }

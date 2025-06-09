@@ -2,12 +2,15 @@
   "name": "chronovault",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=18.17.0"
+  },
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "node scripts/check-env.js && prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "vercel-build": "prisma generate && next build",
+    "vercel-build": "node scripts/check-env.js && prisma generate && next build",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -76,8 +79,7 @@
     "tailwindcss-animate": "^1.0.7",
     "url": "^0.11.4",
     "util": "^0.12.5",
-    "vaul": "^1.1.2",
-    "prisma": "^6.9.0"
+    "vaul": "^1.1.2"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
@@ -85,6 +87,7 @@
     "@types/react-dom": "^18.2.17",
     "autoprefixer": "^10.4.16",
     "postcss": "^8.4.31",
+    "prisma": "^6.9.0",
     "tailwindcss": "^3.3.5",
     "typescript": "^5.3.2"
   }
